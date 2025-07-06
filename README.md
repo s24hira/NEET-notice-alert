@@ -28,17 +28,23 @@ Follow these steps to get the bot up and running:
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/s24hira/neet25-alert.git
-    cd neet25-alert
+    https://github.com/s24hira/NEET-notice-alert.git
+    cd NEET-notice-alert
     ```
 
 2.  **Create a `.env` file:**
     Create a file named `.env` in the root directory of the cloned repository and add your credentials:
     ```dotenv
     TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+    TELEGRAM_CHAT_ID=your_telegram_chat_id
+    GEMINI_API_URL=your_gemini_api_url
     GEMINI_API_KEY=your_gemini_api_key
+    SUPABASE_URL=your_supabase_url
+    SUPABASE_KEY=your_supabase_anon_key
+    SUPABASE_NOTICES_TABLE=notices
+    SUPABASE_USERS_TABLE=users
     ```
-    Replace `your_telegram_bot_token` and `your_gemini_api_key` with your actual tokens.
+    Replace with your actual tokens.
 
 3.  **Deploy using Docker Compose:**
     From the root directory of the repository, run the following command:
