@@ -1,6 +1,11 @@
 import os
 import google.generativeai as genai
-from bot.utils.pdf_converter import PDFConverter  # Import the PDF converter
+import logging
+import time
+
+# Define a custom exception for summarization errors
+class SummarizationError(Exception):
+    pass
 
 class GeminiPDFSummarizer:
     def __init__(self, api_key):
@@ -13,51 +18,50 @@ class GeminiPDFSummarizer:
         # Configure Gemini API
         genai.configure(api_key=api_key)
 
-        # Initialize Gemini model (Gemini 2.0 Flash)
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
+        # Initialize Gemini model
+        self.model = genai.GenerativeModel('gemini-3.5-flash')
 
-    def summarize_pdf(self, pdf_path, cleanup=True):
+    def summarize_pdf(self, pdf_path):
         """
         Summarize a PDF using Gemini API
 
         Args:
             pdf_path (str): Path to the PDF file
-            cleanup (bool, optional): Whether to delete temporary images. Defaults to True.
 
         Returns:
             str: Summary of the PDF
+
+        Raises:
+            SummarizationError: If summarization fails
         """
         try:
-            # Convert PDF to images
-            image_paths = PDFConverter.convert_pdf_to_images(pdf_path)
-
-            if not image_paths:
-                return "Could not convert PDF to images."
-
-            # Prepare summarization prompt
             prompt = """
-            Extract a concise bullet-point summary from the provided images in simple text format, strictly avoid markdown format as this introduces * in between the message.
+            Extract a concise bullet-point summary from the provided document in simple text format, strictly avoid markdown format as this introduces * in between the message.
             The summary should only include key information that is directly relevant and important for candidates.
             DO NOT include helpline, contact information, website link etc. Focus on critical updates, dates, requirements, instructions, and other actionable points.
             Ensure each point is brief and clear, targeting the needs of exam candidates. Provide enough empty space between lines.
             """
 
             try:
-                # Upload and process images
-                images = [genai.upload_file(path) for path in image_paths]
+                logging.info(f"Reading PDF {pdf_path} for inline Gemini summarization...")
+                with open(pdf_path, "rb") as f:
+                    pdf_bytes = f.read()
 
-                # Generate summary
-                response = self.model.generate_content([prompt] + images)
+                logging.info("Generating summary from inline PDF content...")
+                response = self.model.generate_content([
+                    prompt,
+                    {
+                        "mime_type": "application/pdf",
+                        "data": pdf_bytes
+                    }
+                ])
                 summary = response.text
+                return summary
 
             except Exception as e:
-                summary = f"Error in Gemini summarization: {e}"
-
-            # Optional cleanup of temporary images
-            if cleanup:
-                PDFConverter.cleanup_images(image_paths)
-
-            return summary
+                logging.error(f"Error in Gemini summarization: {e}")
+                raise SummarizationError("Failed to generate summary from Gemini.")
 
         except Exception as e:
-            return f"Error processing PDF: {e}"
+            logging.error(f"Error processing PDF: {e}")
+            raise SummarizationError("An unexpected error occurred during PDF processing.")

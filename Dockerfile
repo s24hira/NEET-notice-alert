@@ -4,10 +4,6 @@ FROM python:3.9-slim
 # Set the working directory in the container
 WORKDIR /app
 
-# Install Poppler utilities for PDF processing
-RUN apt-get update && apt-get install -y poppler-utils \
-    && rm -rf /var/lib/apt/lists/*
-
 # Create a non-root user and group
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin -c "Docker image user" appuser
 
@@ -21,9 +17,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create directories for data and temporary files and set permissions
-RUN mkdir -p data pdf_images && \
-    chown -R appuser:appuser data pdf_images && \
-    chmod -R 755 data pdf_images
+RUN mkdir -p data/temp && \
+    chown -R appuser:appuser data && \
+    chmod -R 755 data
 
 # Switch to the non-root user
 USER appuser

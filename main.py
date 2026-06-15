@@ -9,7 +9,7 @@ from flask import Flask, jsonify
 import threading
 
 # Import modular components
-from bot.storage import SupabaseStorage
+from bot.storage import JsonbinStorage
 from bot.handlers import BotHandlers
 from bot.notice_processor import NoticeProcessor
 from bot.utils.summarizer import GeminiPDFSummarizer
@@ -39,7 +39,7 @@ os.makedirs('data/temp', exist_ok=True)
 class NEETNoticeBot:
     def __init__(self):
         self.bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
-        self.storage = SupabaseStorage()
+        self.storage = JsonbinStorage()
         self.summarizer = GeminiPDFSummarizer(GEMINI_API_KEY)
         self.notice_processor = NoticeProcessor(self.summarizer, self.storage, NEET_WEBSITE_URL)
         self.handlers = BotHandlers(self.bot, self.storage)
@@ -114,8 +114,8 @@ def main():
     if not GEMINI_API_KEY:
         logger.error("GEMINI_API_KEY environment variable not set")
         return
-    if not os.getenv('SUPABASE_URL') or not os.getenv('SUPABASE_KEY'):
-        logger.error("Supabase URL or Key not set in environment variables.")
+    if not os.getenv('JSONBIN_API_KEY') or not os.getenv('JSONBIN_BIN_ID'):
+        logger.error("JSONBin API Key or Bin ID not set in environment variables.")
         return
         
     bot = NEETNoticeBot()

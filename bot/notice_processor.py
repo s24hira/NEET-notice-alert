@@ -5,17 +5,17 @@ import datetime
 from bs4 import BeautifulSoup
 import time
 
-from bot.utils.summarizer import GeminiPDFSummarizer
-from bot.storage import SupabaseStorage
+from bot.utils.summarizer import GeminiPDFSummarizer, SummarizationError
+from bot.storage import JsonbinStorage
 
 logger = logging.getLogger(__name__)
 
 class NoticeProcessor:
-    def __init__(self, summarizer: GeminiPDFSummarizer, storage: SupabaseStorage, neet_website_url: str):
+    def __init__(self, summarizer: GeminiPDFSummarizer, storage: JsonbinStorage, neet_website_url: str):
         self.summarizer = summarizer
         self.storage = storage
         self.neet_website_url = neet_website_url
-        os.makedirs('data/temp', exist_ok=True) # Ensure temp directory exists
+        os.makedirs('data/temp', exist_ok=True)
 
     def scrape_notices(self, max_retries=3):
         for attempt in range(max_retries):
@@ -44,7 +44,6 @@ class NoticeProcessor:
                     continue
 
                 new_notices = []
-                # Fetch existing notice URLs once
                 existing_notice_urls = self.storage.get_all_notice_urls()
                 logger.info(f"Fetched {len(existing_notice_urls)} existing notice URLs.")
 
@@ -67,7 +66,6 @@ class NoticeProcessor:
                     else:
                         notice_date = None
 
-                    # Check against the local set instead of repeated DB calls
                     if notice_link not in existing_notice_urls:
                         new_notices.append({
                             'title': notice_title,
@@ -75,7 +73,6 @@ class NoticeProcessor:
                             'date': notice_date
                         })
 
-                # Sort notices by date (most recent first)
                 new_notices = sorted(new_notices, key=lambda x: x['date'] if x['date'] else datetime.datetime.min, reverse=True)
                 return new_notices
 
@@ -122,11 +119,12 @@ PDF Link: {notice['link']}
                 """
                 bot.send_message(user_id, alert_message)
 
-                summary_message = f"""
+                if summary:
+                    summary_message = f"""
 📋 Notice Summary:
 {summary}
-                """
-                bot.send_message(user_id, summary_message)
+                    """
+                    bot.send_message(user_id, summary_message)
 
             except Exception as e:
                 logger.error(f"Telegram message send error to user {user_id}: {e}")
@@ -137,11 +135,11 @@ PDF Link: {notice['link']}
             new_notices = self.scrape_notices()
             logger.info(f"Found {len(new_notices)} new notices")
 
-            # Fetch all users once before the loop
             all_users = self.storage.get_all_users()
             logger.info(f"Fetched {len(all_users)} users.")
 
             for notice in new_notices:
+                summary = None  # Initialize summary to None
                 try:
                     logger.info(f"Processing notice: {notice['title']}")
                     pdf_path = self.download_pdf(notice['link'])
@@ -149,24 +147,28 @@ PDF Link: {notice['link']}
                         continue
 
                     logger.info("Generating summary using Gemini")
-                    summary = self.summarizer.summarize_pdf(pdf_path)
+                    try:
+                        summary = self.summarizer.summarize_pdf(pdf_path)
+                    except SummarizationError as e:
+                        logger.error(f"Summarization failed: {e}")
+                        summary = "Could not generate a summary for this notice. Please check the PDF directly."
 
-                    # Add notice to Airtable with summary
                     added_record = self.storage.add_notice({
                         'title': notice['title'],
                         'link': notice['link'],
                         'date': notice['date'],
-                        'summary': summary,
-                        'status': 'Sent' # Mark as sent after processing
+                        'summary': summary if summary else "Summary not available.",
+                        'status': 'New'
                     })
 
                     if added_record:
                         logger.info("Sending alerts to users")
-                        # Pass the fetched user list to the alert method
                         self.send_telegram_alerts(bot, notice, summary, all_users)
+                        # Update status to 'Sent' after successfully sending alerts
+                        self.storage.update_notice_status(added_record['id'], 'Sent')
                         logger.info("Notice processed successfully")
                     else:
-                        logger.warning(f"Notice '{notice['title']}' was not added to Airtable, skipping alerts.")
+                        logger.warning(f"Notice '{notice['title']}' was not added to Supabase, skipping alerts.")
 
                     try:
                         os.remove(pdf_path)

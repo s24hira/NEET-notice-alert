@@ -1,12 +1,8 @@
-# It is recommended to pin dependency versions for reproducible builds.
-# You can generate a pinned requirements.txt file with `pip freeze > requirements.txt`
-telebot
-requests
-beautifulsoup4
-pdf2image
-google-generativeai
-schedule
-Pillow
-python-dotenv
-supabase
-Flask
+# Pinned dependency versions for reproducible builds.
+pyTelegramBotAPI==4.20.0
+requests==2.32.3
+beautifulsoup4==4.12.3
+google-generativeai==0.8.3
+schedule==1.2.2
+python-dotenv==1.0.1
+Flask==3.0.3

@@ -31,6 +31,11 @@ class BotHandlers:
             status_msg = "Bot Status: ✅ Running"
             self.bot.reply_to(message, status_msg)
 
+        @self.bot.message_handler(commands=['ping'])
+        @self.ensure_user
+        def ping_command(message):
+            self.bot.reply_to(message, "Pong!")
+
         @self.bot.message_handler(commands=['help'])
         @self.ensure_user
         def help_command(message):
@@ -38,6 +43,7 @@ class BotHandlers:
             NEET Notice Bot Commands:
             /start - Begin receiving notice alerts
             /status - Check current bot status
+            /ping - Ping the bot
             /help - Display this help message
             """
             self.bot.reply_to(message, help_text)
