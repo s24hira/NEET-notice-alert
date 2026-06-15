@@ -1,5 +1,6 @@
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import logging
 import time
 
@@ -15,11 +16,9 @@ class GeminiPDFSummarizer:
         Args:
             api_key (str): Google Gemini API key
         """
-        # Configure Gemini API
-        genai.configure(api_key=api_key)
-
-        # Initialize Gemini model
-        self.model = genai.GenerativeModel('gemini-3.5-flash')
+        # Initialize Gemini Client
+        self.client = genai.Client(api_key=api_key)
+        self.model = 'gemini-3.5-flash'
 
     def summarize_pdf(self, pdf_path):
         """
@@ -48,13 +47,16 @@ class GeminiPDFSummarizer:
                     pdf_bytes = f.read()
 
                 logging.info("Generating summary from inline PDF content...")
-                response = self.model.generate_content([
-                    prompt,
-                    {
-                        "mime_type": "application/pdf",
-                        "data": pdf_bytes
-                    }
-                ])
+                response = self.client.models.generate_content(
+                    model=self.model,
+                    contents=[
+                        types.Part.from_bytes(
+                            data=pdf_bytes,
+                            mime_type="application/pdf",
+                        ),
+                        prompt
+                    ]
+                )
                 summary = response.text
                 return summary
 

@@ -1,95 +1,124 @@
-# NEET Notice Alert Bot
+# NEET Notice Alert Bot 🚀
 
-A Telegram bot designed to monitor the official NEET website for new notices, process PDF documents using the Gemini API for text extraction and summarization, and send timely alerts to subscribed users via Telegram.
+A modern, lightweight Telegram bot designed to monitor the official NEET website for new notices, extract and summarize PDF contents using Google's **Gemini 3.5 Flash** model, and send instant alerts to subscribed users.
 
-## Features
+---
 
-- **Automated Monitoring:** Continuously checks the NEET website for new notice releases at configurable intervals.
-- **PDF Processing:** Downloads new notice PDFs and converts their content to text using the Google Gemini API.
-- **Intelligent Summarization:** Generates concise summaries of the notice content for quick understanding.
-- **Instant Alerts:** Sends immediate Telegram notifications to subscribed users with the notice summary and a link to the original PDF.
-- **Duplicate Prevention:** Tracks previously processed notices to avoid sending redundant alerts.
-- **Easy Deployment:** Designed for straightforward setup and deployment using Docker and Docker Compose.
-- **Background Operation:** Runs as a daemonized service using Docker Compose.
-- **Clean-up:** Automatically manages temporary files created during PDF processing.
+## 🌟 Key Features
 
-## Prerequisites
+- **Automated Monitoring:** Continuously scans the NEET website for new notices at randomized, natural intervals (5–8 minutes).
+- **Direct PDF Summarization:** Uses Google's modern **Gemini 2.0/3.5 GenAI Client** to summarize PDFs inline without slow, bulky PDF-to-image conversions.
+- **Instant Alerts:** Dispatches notice titles, direct links, and clear bullet-point summaries to all subscribed Telegram users.
+- **Lightweight Storage:** Migrated to **JSONBin.io** for serverless, configuration-free storage of notices and subscriber lists.
+- **Microservice Ready:** Integrates a built-in health-check server (`/health` endpoint on port `8001`) for zero-downtime hosting.
+- **Interactive Verification**: Includes an end-to-end `test_alert.py` testing script to instantly verify the scraper, Gemini API, and Telegram alerts.
 
-Before deploying the bot, ensure you have the following installed:
+---
 
-- **Docker:** [Get Docker](https://www.docker.com/get-started)
-- **Docker Compose:** [Install Docker Compose](https://docs.docker.com/compose/install/)
-- **Telegram Bot Token:** Obtain a token by talking to [@BotFather](https://t.me/botfather) on Telegram.
-- **Google Gemini API Key:** Get an API key from the [Google AI for Developers](https://ai.google.dev/) platform.
+## 📋 Prerequisites
 
-## Deployment
+Before running or deploying the bot, make sure you have:
 
-Follow these steps to get the bot up and running:
+1. **Python 3.11+** installed (if running directly).
+2. **Telegram Bot Token:** Created via [@BotFather](https://t.me/botfather).
+3. **Google Gemini API Key:** Generated from [Google AI Studio](https://aistudio.google.com/).
+4. **JSONBin API Key & Bin ID:** Set up a free account and a bin on [JSONBin.io](https://jsonbin.io/).
 
-1.  **Clone the repository:**
-    ```bash
-    https://github.com/s24hira/NEET-notice-alert.git
-    cd NEET-notice-alert
-    ```
+---
 
-2.  **Create a `.env` file:**
-    Create a file named `.env` in the root directory of the cloned repository and add your credentials:
-    ```dotenv
-    TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-    TELEGRAM_CHAT_ID=your_telegram_chat_id
-    GEMINI_API_URL=your_gemini_api_url
-    GEMINI_API_KEY=your_gemini_api_key
-    SUPABASE_URL=your_supabase_url
-    SUPABASE_KEY=your_supabase_anon_key
-    SUPABASE_NOTICES_TABLE=notices
-    SUPABASE_USERS_TABLE=users
-    ```
-    Replace with your actual tokens.
+## 🛠️ Configuration
 
-3.  **Deploy using Docker Compose:**
-    From the root directory of the repository, run the following command:
-    ```bash
-    docker-compose up -d --build
-    ```
-    The `--build` flag ensures the Docker image is built before starting the containers. The `-d` flag runs the services in detached mode.
+Create a `.env` file in the root directory and populate it with your credentials:
 
-4.  **Verify Deployment:**
-    Check the logs to ensure the bot is running without errors:
-    ```bash
-    docker-compose logs -f
-    ```
+```dotenv
+# Telegram Configuration
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
 
-## Bot Commands
+# Gemini API Configuration
+GEMINI_API_KEY=your_gemini_api_key_here
 
-Users can interact with the bot using the following commands in Telegram:
+# JSONBin Storage Configuration
+JSONBIN_API_KEY=your_jsonbin_api_key_here
+JSONBIN_BIN_ID=your_jsonbin_bin_id_here
 
--   `/start` - Subscribe to receive NEET notice alerts.
--   `/status` - Check the current operational status of the bot.
--   `/help` - Display a help message with available commands.
+# Optional Settings
+NEET_WEBSITE_URL=https://neet.nta.nic.in/
+HEALTH_CHECK_PORT=8001
+```
 
-## Data Storage
+---
 
-The bot stores necessary data in the following locations within the container, which are mapped to local volumes for persistence:
+## 🚀 Local Run (Without Docker)
 
--   **Notice Data:** Information about processed notices is stored in `./data`.
--   **Temporary Files:** Temporary PDF images and other processing files are stored in `./pdf_images`.
+1. **Install Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## Maintenance
+2. **Verify Setup (Recommended):**
+   Run the end-to-end test script to verify scraping, Gemini summarization, and Telegram notifications:
+   ```bash
+   python test_alert.py
+   ```
 
-The bot includes built-in maintenance features:
+3. **Start the Bot:**
+   ```bash
+   python main.py
+   ```
 
--   **Monitoring Frequency:** Checks the NEET website at random intervals (typically between 5-8 minutes) to avoid predictable patterns.
--   **File Cleanup:** Automatically removes temporary PDF and image files after processing.
--   **Notice Tracking:** Maintains a record of detected notices to prevent sending duplicate alerts to users.
+---
 
-## Support
+## 🐳 Deployment (With Docker & Docker Compose)
 
-For any issues, questions, or feature requests, please open an issue on the [GitHub repository](https://github.com/s24hira/neet25-alert/issues).
+1. **Deploy using Docker Compose:**
+   ```bash
+   docker-compose up -d --build
+   ```
 
-## Contributing
+2. **View Logs:**
+   ```bash
+   docker-compose logs -f
+   ```
 
-Contributions are welcome! Please feel free to fork the repository, make improvements, and submit pull requests.
+---
 
-## License
+## 🤖 Bot Commands
+
+Interact with the bot on Telegram using:
+
+- `/start` - Subscribe to receive alerts for new NEET notices.
+- `/status` - Check if you are currently subscribed.
+- `/ping` - Confirm bot is online (responds with `Pong!`).
+- `/help` - View a list of all available commands.
+
+---
+
+## 📁 Repository Structure
+
+```
+├── bot/
+│   ├── utils/
+│   │   └── summarizer.py     # Gemini 3.5 Flash inline PDF summarizer
+│   ├── handlers.py           # Telegram command handlers (/start, /ping, etc.)
+│   ├── notice_processor.py   # Scraper, PDF downloader, and alert coordinator
+│   └── storage.py            # JSONBin.io database integration
+├── data/                     # Local data cache
+├── main.py                   # Main bot execution entrypoint
+├── test_alert.py             # E2E test verification script
+├── test_integration.py       # Mock integration unit tests
+├── requirements.txt          # Python dependencies
+├── Dockerfile                # Multi-stage lightweight Docker image
+└── docker-compose.yml        # Docker Compose configuration
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to fork the repository, make improvements, and submit pull requests. For bugs or feature requests, open an issue in the repository.
+
+---
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
